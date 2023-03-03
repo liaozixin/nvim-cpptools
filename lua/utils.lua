@@ -19,10 +19,16 @@ local function dirlist(path)
 end
 
 local function makedirs(path)
+    if not path then
+        return nil
+    end
     os.execute("python " .. plugin_path .. "/makedirs.py " .. path)
 end
 
 local function isdir(path)
+    if not path then
+        return nil
+    end
     local handle = io.popen("python " .. plugin_path .. "/isdir.py " .. path)
     local res = handle:read("*a")
     if string.find(res, "true") then
@@ -34,6 +40,9 @@ local function isdir(path)
 end
 
 local function hasfile(path)
+    if not path then
+        return nil
+    end
     local file = io.open(path, "r")
     if file then
         file:close()
