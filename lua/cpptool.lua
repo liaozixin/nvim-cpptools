@@ -2,6 +2,8 @@ vim.notify = require("notify")
 local query = require('vim.treesitter.query')
 local parsers = require('nvim-treesitter.parsers')
 local utils = require('utils')
+local ml = require('move-lines')
+
 
 local current_dir = vim.api.nvim_call_function('getcwd', {})
 current_dir = string.gsub(current_dir, [[\]], "/")
@@ -248,8 +250,17 @@ local function create_func_def()
     
 end
 
+local function move_lines(direction)
+    if direction == "up" then
+        ml.up_lines()
+    elseif direction == "down" then
+        ml.down_lines()
+    end
+end
+
 return{
     create_file = create_file,
     create_func_def = create_func_def,
+    move_lines = move_lines,
 }
 
