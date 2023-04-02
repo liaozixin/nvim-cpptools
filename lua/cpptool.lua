@@ -51,6 +51,9 @@ local function create_file()
     utils.clear_cmd()
 
     local file_name = string.match(input, ".+/([^/]+)$")
+    if input == "" then
+        return
+    end
     if not file_name and not utils.isdir(input) then
         utils.makedirs(input)
         vim.notify(input, "info",{
