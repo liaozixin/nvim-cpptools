@@ -197,7 +197,7 @@ local function create_func_def()
                 table.insert(funcs, func)
             end
         end
-        if utils.hasfile(current_dir..file_name.."."..".cpp") then
+        if utils.hasfile(current_dir..file_name..".cpp") then
             local file = io.open(current_dir..file_name..".cpp", "a+")
             if not file then
                 vim.notify([[can't create func imp!]], "error", {
@@ -212,7 +212,7 @@ local function create_func_def()
             vim.notify("in "..current_dir..file_name..".cpp", "info", {
                 title = "Create func imp!",
             })
-        elseif utils.hasfile(current_dir..file_name.."."..".c") then
+        elseif utils.hasfile(current_dir..file_name..".c") then
             local file = io.open(current_dir..file_name..".c", "a+")
             if not file then
                 vim.notify([[can't create func imp!]], "error", {
