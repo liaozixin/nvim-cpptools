@@ -49,13 +49,23 @@ local function _cf(file_name, file_type, path)
     vim.api.nvim_command("edit " ..path..file_name.."."..file_type)
 end
 
+
 local function create_file()
-    local input = vim.fn.input("Create file ", current_dir)
+    local input
+    -- local input = vim.fn.input("Create file ", current_dir)
+    vim.ui.input({prompt = "Create file ", 
+        default = current_dir, 
+        completion = "dir",
+        },function (str)
+            input = str:gsub("\\", "/")
+        end)
+    utils.clear_cmd()
 
     local file_name = string.match(input, ".+/([^/]+)$")
-    if input == "" then
+    if input == current_dir then
         return
     end
+
     if not file_name and not utils.isdir(input) then
         utils.makedirs(input)
         vim.notify(input, "info",{
