@@ -1,20 +1,22 @@
 local parsers = require('nvim-treesitter.parsers')
 local utils = require('utils')
 
-
-local current_dir = vim.api.nvim_call_function('getcwd', {})
+local current_dir = vim.fn.expand('%:p:h')
 current_dir = string.gsub(current_dir, [[\]], "/")
 current_dir = current_dir .. "/"
+
+-- ===========================create file=====================================================
 
 local function _cf(file_name, file_type, path)
     local file
     local str
+    if utils.hasfile(path..file_name.."."..file_type) then
+        vim.api.nvim_command("edit " ..path..file_name.."."..file_type)
+        return
+    end
     if file_type then
         file = io.open(path..file_name.."."..file_type, "a+")
         str = file_name .. "." ..file_type
-    else
-        file = io.open(path..file_name, "a+")
-        str = file_name
     end
     if not file then
         vim.notify("create file error!", "error", {
@@ -44,11 +46,11 @@ local function _cf(file_name, file_type, path)
     vim.notify(path..str, "info", {
         title = "Create file!",
     })
+    vim.api.nvim_command("edit " ..path..file_name.."."..file_type)
 end
 
 local function create_file()
     local input = vim.fn.input("Create file ", current_dir)
-    utils.clear_cmd()
 
     local file_name = string.match(input, ".+/([^/]+)$")
     if input == "" then
@@ -62,9 +64,9 @@ local function create_file()
         return
     end
 
-    local file_type = file_name:match("%.([^%.]+)$")
-    file_name = file_name:match("(.+)%..+") or file_name
-    local path = input:match("(.*/)")
+    local file_type = assert(file_name:match("%.([^%.]+)$"))
+    file_name = assert(file_name:match("(.+)%..+") or file_name)
+    local path = assert(input:match("(.*/)"))
 
     if file_name then
         if utils.isdir(path) then
@@ -75,6 +77,11 @@ local function create_file()
         end
     end
 end
+
+-- ==========================================================================================
+
+
+-- ====================================create func def======================================= 
 
 local function traverse_node(node, parent_node, n_info, c_info)
     if node:type() == "identifier" and node:parent():type() == "namespace_definition" then
@@ -113,15 +120,20 @@ local function get_cpp_header_info(bufnr, lang)
     return namespace_info, class_info
 end
 
-local function get_selelct_lines(buf)
-    local s_b, s_e = vim.fn.getpos("'<")[2], vim.fn.getpos("'>")[2]
-    if s_b > s_e then
-        local tem = s_e
-        s_e = s_b
-        s_b = tem
+local function get_select_lines(buf)
+    -- local lines_begin, lines_end = vim.fn.getpos("'<")[2], vim.fn.getpos("'>")[2]
+    local lines_begin, lines_end = vim.fn.getcurpos()[2], vim.fn.line("v")
+
+    local lines_num
+    if(lines_begin > lines_end) then
+        local tem = lines_end
+        lines_end = lines_begin
+        lines_begin = tem
     end
-    local select_lines = vim.api.nvim_buf_get_lines(buf, s_b - 1, s_e, null)
-    return {s_b, s_e, s_e - s_b + 1, select_lines}
+    lines_num = lines_end - lines_begin + 1
+    local lines_str = vim.api.nvim_buf_get_lines(buf, lines_begin - 1, lines_end, null) 
+
+    return {lines_begin, lines_end, lines_num, lines_str}
 end
 
 local function create_func_def()
@@ -133,10 +145,12 @@ local function create_func_def()
     file_name = file_name:match("(.+)%..+") or file_name
     extend_name = extend_name:match("(%.%w+)")
     local file_type = vim.bo.filetype
+    file_name = file_name:gsub(".*/", "")
+
 
     if file_type == 'cpp' and (extend_name == '.hpp' or extend_name == '.h') then
         local n_info, c_info = get_cpp_header_info(0, file_type) 
-        local select_lines = get_selelct_lines(0)
+        local select_lines = get_select_lines(0)
         local funcs = {}
 
 
@@ -146,7 +160,20 @@ local function create_func_def()
             local func = ""
             local pattern1 = "^%s*[%w_:]+%s+[%w_:]+%s*%([^()]*%)[^{};]*%s*;$"
             local pattern2 = "%s*[%w_:~]*%s*%([^()]*%)[^{};]*%s*;$"
-            
+
+            if str:find("virtual") then
+                str = str:gsub("virtual", "")
+            end
+            local lastSemicolonPos = string.find(str, ";[^;]*$")
+            if lastSemicolonPos then
+                local substr = string.sub(str, 1, lastSemicolonPos - 1)
+                substr = string.gsub(substr, "%s*final%s*$", "")
+                substr = string.gsub(substr, "%s*override%s*$", "")
+                str = substr .. ";"
+            end
+
+
+
             if str:match(pattern1) then
                 local ret_type, rest = str:match("(%S+)%s+((%S+)%s*%(%s*(.*)%s*%)%s*%w*);")
                 local line = _ + select_lines[1] - 1
@@ -197,6 +224,8 @@ local function create_func_def()
                 table.insert(funcs, func)
             end
         end
+
+
         if utils.hasfile(current_dir..file_name..".cpp") then
             local file = io.open(current_dir..file_name..".cpp", "a+")
             if not file then
@@ -212,6 +241,8 @@ local function create_func_def()
             vim.notify("in "..current_dir..file_name..".cpp", "info", {
                 title = "Create func imp!",
             })
+            vim.api.nvim_command("edit " ..current_dir..file_name..".cpp")
+
         elseif utils.hasfile(current_dir..file_name..".c") then
             local file = io.open(current_dir..file_name..".c", "a+")
             if not file then
@@ -227,15 +258,17 @@ local function create_func_def()
             vim.notify("in "..current_dir..file_name..".c", "info", {
                 title = "Create func imp!",
             })
+            vim.api.nvim_command("edit " ..current_dir..file_name..".c")
+
         else
-            local file = io.open(current_dir..file_name..".cpp", "a+")
-            file:write([[#include "]]..file_name..extend_name..[["]].."\n\n\n\n")
+            local file = assert(io.open(current_dir..file_name..".cpp", "w+"), "Open file error!")
             if not file then
                 vim.notify([[can't create func imp!]], "error", {
                     title = "error"
                 })
                 return
             end
+            file:write([[#include "]]..file_name..extend_name..[["]].."\n\n\n\n")
             for _, v in ipairs(funcs) do
                 file:write(v)
             end
@@ -243,31 +276,22 @@ local function create_func_def()
             vim.notify("in "..current_dir..file_name..".cpp", "info", {
                 title = "Create imp!",
             })
+            vim.api.nvim_command("edit " ..current_dir..file_name..".cpp")
         end
     else
         utils.clear_cmd()
     end
-    
 end
+
+-- ============================================================================================
+
+
+-- ==============================move lines====================================================
 
 local mode
 local buf 
 
-local get_select_lines = function(buf)
-    -- local lines_begin, lines_end = vim.fn.getpos("'<")[2], vim.fn.getpos("'>")[2]
-    local lines_begin, lines_end = vim.fn.getcurpos()[2], vim.fn.line("v")
 
-    local lines_num
-    if(lines_begin > lines_end) then
-        local tem = lines_end
-        lines_end = lines_begin
-        lines_begin = tem
-    end
-    lines_num = lines_end - lines_begin + 1
-    local lines_str = vim.api.nvim_buf_get_lines(buf, lines_begin - 1, lines_end, null) 
-
-    return {lines_begin, lines_end, lines_str, lines_num}
-end
 
 local up_lines = function()
     mode = vim.fn.mode()
@@ -281,7 +305,7 @@ local up_lines = function()
         })
         return
     end
-    for i, line in ipairs(lines_info[3]) do
+    for i, line in ipairs(lines_info[4]) do
         local insert_pos = lines_info[1] - 2 + i - 1
         vim.api.nvim_buf_set_lines(buf, insert_pos, insert_pos, false, {line})
         vim.api.nvim_buf_set_lines(buf, lines_info[1] + i - 1, lines_info[1] + i, false, {})
@@ -290,7 +314,7 @@ local up_lines = function()
     vim.api.nvim_win_set_cursor(0, {lines_info[1] - 1, 1})
     vim.api.nvim_input("<ESC>")
     vim.api.nvim_input('V')
-    for i = 1, lines_info[4] - 1, 1 do
+    for i = 1, lines_info[3] - 1, 1 do
         vim.api.nvim_input('j')
     end
     -- vim.api.nvim_win_set_cursor(0, {lines_info[2] - 1, 1})
@@ -315,7 +339,7 @@ local down_lines = function()
     vim.api.nvim_win_set_cursor(0, {lines_info[1] + 1, 1})
     vim.api.nvim_input("<ESC>")
     vim.api.nvim_input('V')
-    for i = 1, lines_info[4] - 1, 1 do
+    for i = 1, lines_info[3] - 1, 1 do
         vim.api.nvim_input('j')
     end
     -- vim.api.nvim_win_set_cursor(0, {lines_info[2] + 1, 1})
@@ -329,9 +353,11 @@ local function move_lines(direction)
     end
 end
 
+-- =====================================================================================
+
+
 return{
     create_file = create_file,
     create_func_def = create_func_def,
     move_lines = move_lines,
 }
-
