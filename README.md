@@ -12,7 +12,7 @@ use 'liaozixin/nvim-cpptools'
 
 ## How to use
 ### Create file or directory
-If you create a header file, macro definitions that prevent duplicate inclusion are automatically added. If you create a source file, it will automatically include header files with the same name in the current directory. you can use <Tab> to complete input.
+If you create a header file, macro definitions that prevent duplicate inclusion are automatically added. If you create a source file, it will automatically include header files with the same name in the current directory. you can use **\<Tab\>** to complete input.
 ![img1](create_head_file.gif)
 ![img2](create_source_file.gif)
 ```
