@@ -2,7 +2,6 @@
 A usefull cpp tools for nvim，the tool includes quick creation of files, folders, moving multiple lines within files, and creating function definitions in source files through the declarations in header files.
 
 ## Requirement
-- Has Python in the system environment.
 - The functionality that generates the function definition depends on [nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter).
 
 ## Installation
@@ -13,7 +12,7 @@ use 'liaozixin/nvim-cpptools'
 
 ## How to use
 ### Create file or directory
-If you create a header file, macro definitions that prevent duplicate inclusion are automatically added. If you create a source file, it will automatically include header files with the same name in the current directory.
+If you create a header file, macro definitions that prevent duplicate inclusion are automatically added. If you create a source file, it will automatically include header files with the same name in the current directory. you can use <Tab> to complete input.
 ![img1](create_head_file.gif)
 ![img2](create_source_file.gif)
 ```
