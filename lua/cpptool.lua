@@ -173,6 +173,8 @@ local function create_func_def()
 
             if str:find("virtual") then
                 str = str:gsub("virtual", "")
+            elseif str:find("static") then
+                str = str:gsub("static", "")
             end
             local lastSemicolonPos = string.find(str, ";[^;]*$")
             if lastSemicolonPos then
@@ -206,7 +208,7 @@ local function create_func_def()
                     end
                 end
                 local n_c = namespace..class:gsub("^%s*", "")
-                func = ret_type .. " " .. n_c .. rest .. "\n{\n\n\n}\n"
+                func = ret_type .. " " .. n_c .. rest .. "{\n\n\n}\n"
                 table.insert(funcs, func)
 
             elseif str:match(pattern2) then
@@ -217,7 +219,7 @@ local function create_func_def()
                         class = tem .. "::" .. class
                     end
                 end
-                func = class..str:match("^%s*(.-)%s*;?$").."\n{\n\n\n}\n"
+                func = class..str:match("^%s*(.-)%s*;?$").."{\n\n\n}\n"
                 for index, value in ipairs(n_info) do
                     if line > value[2] and line < value[3] then
                         local tem = value[1]
