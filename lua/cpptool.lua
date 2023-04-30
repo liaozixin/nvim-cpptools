@@ -57,10 +57,14 @@ local function create_file()
         default = current_dir, 
         completion = "dir",
         },function (str)
-            input = str:gsub("\\", "/")
+            if str then
+                input = str:gsub("\\", "/")
+            end
         end)
     utils.clear_cmd()
-
+    if not input then
+        return
+    end
     local file_name = string.match(input, ".+/([^/]+)$")
     if input == current_dir then
         return
