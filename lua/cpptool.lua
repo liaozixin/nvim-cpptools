@@ -1,9 +1,6 @@
 local parsers = require('nvim-treesitter.parsers')
 local utils = require('utils')
 
-local current_dir = vim.fn.expand('%:p:h')
-current_dir = string.gsub(current_dir, [[\]], "/")
-current_dir = current_dir .. "/"
 
 -- ===========================create file=====================================================
 
@@ -51,6 +48,9 @@ end
 
 
 local function create_file()
+    local current_dir = vim.fn.expand('%:p:h')
+    current_dir = string.gsub(current_dir, [[\]], "/")
+    current_dir = current_dir .. "/"
     local input
     -- local input = vim.fn.input("Create file ", current_dir)
     vim.ui.input({prompt = "Create file ", 
@@ -151,6 +151,10 @@ local function get_select_lines(buf)
 end
 
 local function create_func_def()
+    local current_dir = vim.fn.expand('%:p:h')
+    current_dir = string.gsub(current_dir, [[\]], "/")
+    current_dir = current_dir .. "/"
+
     local file_name = vim.fn.bufname('%')
     local extend_name
     file_name = file_name:gsub([[\]], '/')
